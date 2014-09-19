@@ -3,7 +3,7 @@ openbazaar (0.2.0) unstable; urgency=low
   * New feature: "Add Node" by entering Store GUID.
   * New feature: Shutdown from within the web client. (Settings > Advanced)
   * New feature: Web port is now randomized by default.
-  * New feature: Automatically openes preferred web browser by default on start.
+  * New feature: Automatically opens preferred web browser by default on start.
   * UX-Upgrade: stores on home page are now scrollable.
   * Tests converted to formal unit tests, travis integration.
   * Code reorganization, normalization, cleanup, refactors.
