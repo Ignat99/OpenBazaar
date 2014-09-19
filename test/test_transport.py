@@ -25,6 +25,7 @@ def getMockOpenBazaarContext():
                              disable_upnp=True,
                              disable_stun_check=True,
                              disable_open_browser=True,
+                             disable_sqlite_crypt=False,
                              enable_ip_checker=False)
 
 

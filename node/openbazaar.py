@@ -34,6 +34,7 @@ def getDefaults():
             'DISABLE_UPNP': False,
             'DISABLE_STUN_CHECK': False,
             'DISABLE_OPEN_DEFAULT_WEBBROWSER': False,
+            'DISABLE_SQLITE_CRYPT': False,
             'LOG_LEVEL': 10,  # CRITICAL=50, ERROR=40, WARNING=30, DEBUG=10, NOTSET=0
             'NODES': 3,
             'HTTP_IP': '127.0.0.1',
@@ -128,6 +129,10 @@ def initArgumentParser(defaults):
                         help='Don\'t open preferred web browser ' +
                         'automatically on start')
 
+    parser.add_argument("--disable-sqlite-crypt",
+                        action="store_true",
+                        help="Disable encryption on sqlite database")
+
     parser.add_argument('--config-file',
                         default=defaults['CONFIG_FILE'],
                         help='Disk path to an OpenBazaar configuration file')
@@ -178,6 +183,9 @@ openbazaar [options] <command>
 
     --database
         Database filename. (default 'db/od.db')
+
+    --disable-sqlite-crypt
+        Disable encryption on sqlite database
 
     -n, --dev-nodes
         Number of dev nodes to start up
@@ -322,6 +330,11 @@ def create_openbazaar_context(arguments, defaults, nat_status):
     if arguments.disable_open_browser:
         disable_open_browser = True
 
+    # disable sqlite crypt
+    disable_sqlite_crypt = defaults['DISABLE_SQLITE_CRYPT']
+    if arguments.disable_sqlite_crypt != disable_sqlite_crypt:
+        disable_sqlite_crypt = True
+
     # enable ip checker
     enable_ip_checker = defaults['ENABLE_IP_CHECKER']
     if arguments.enable_ip_checker:
@@ -346,6 +359,7 @@ def create_openbazaar_context(arguments, defaults, nat_status):
                                disable_upnp,
                                disable_stun_check,
                                disable_open_browser,
+                               disable_sqlite_crypt,
                                enable_ip_checker)
 
     return ob_ctx

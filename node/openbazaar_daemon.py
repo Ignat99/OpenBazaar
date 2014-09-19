@@ -59,6 +59,7 @@ class OpenBazaarContext:
                  disable_upnp,
                  disable_stun_check,
                  disable_open_browser,
+                 disable_sqlite_crypt,
                  enable_ip_checker):
         self.nat_status = nat_status
         self.my_market_ip = my_market_ip
@@ -78,6 +79,7 @@ class OpenBazaarContext:
         self.disable_upnp = disable_upnp
         self.disable_stun_check = disable_stun_check
         self.disable_open_browser = disable_open_browser
+        self.disable_sqlite_crypt = disable_sqlite_crypt
         self.enable_ip_checker = enable_ip_checker
 
         # to deduct up-time, and (TODO) average up-time
@@ -104,6 +106,7 @@ class OpenBazaarContext:
              "db_path": self.db_path,
              "disable_upnp": self.disable_upnp,
              "disable_open_browser": self.disable_open_browser,
+             "disable_sqlite_crypt": self.disable_sqlite_crypt,
              "enable_ip_checker": self.enable_ip_checker,
              "started_utc_timestamp": self.started_utc_timestamp,
              "uptime_in_secs": long(time.time()) - long(self.started_utc_timestamp)
@@ -115,7 +118,7 @@ class OpenBazaarContext:
 class MarketApplication(tornado.web.Application):
     def __init__(self, ob_ctx):
 
-        db = Obdb(ob_ctx.db_path)
+        db = Obdb(ob_ctx.db_path, ob_ctx.disable_sqlite_crypt)
 
         self.transport = CryptoTransportLayer(ob_ctx, db)
 

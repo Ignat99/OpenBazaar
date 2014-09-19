@@ -51,7 +51,7 @@ class TransportLayer(object):
         try:
             socket.inet_pton(socket.AF_INET6, self.ip)
             my_uri = 'tcp://[%s]:%s' % (self.ip, self.port)
-        except socket.error:
+        except (socket.error, ValueError):
             my_uri = 'tcp://%s:%s' % (self.ip, self.port)
         self.uri = my_uri
 
@@ -115,7 +115,7 @@ class TransportLayer(object):
                 socket.inet_pton(socket.AF_INET6, self.ip)
                 self.socket.ipv6 = True
                 self.socket.bind('tcp://[*]:%s' % self.port)
-            except (AttributeError, socket.error):
+            except (AttributeError, socket.error, ValueError):
                 self.socket.bind('tcp://*:%s' % self.port)
 
         self.stream = zmqstream.ZMQStream(
@@ -569,7 +569,7 @@ class CryptoTransportLayer(TransportLayer):
             try:
                 socket.inet_pton(socket.AF_INET6, seed)
                 seed_peers[idx] = "tcp://[%s]:12345" % seed
-            except socket.error:
+            except (socket.error, ValueError):
                 seed_peers[idx] = "tcp://%s:12345" % seed
 
         # Connect to persisted peers
@@ -829,10 +829,8 @@ class CryptoTransportLayer(TransportLayer):
         nickname = msg.get('senderNick')[:120]
 
         self.dht.add_known_node((ip, port, guid, nickname))
-        self.log.info('ON MESSAGE %s' % json.dumps(msg, ensure_ascii=False))
-
+        self.log.info('On Message: %s' % json.dumps(msg, ensure_ascii=False))
         self.dht.add_peer(self, uri, pubkey, guid, nickname)
-        self.log.debug('Callbacks %s' % self.callbacks)
         t = Thread(target=self.trigger_callbacks, args=(msg['type'], msg,))
         t.start()
 
