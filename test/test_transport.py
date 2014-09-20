@@ -22,6 +22,7 @@ def getMockOpenBazaarContext():
                              seed_peers=[],
                              seed_mode=False,
                              dev_mode=False,
+                             dev_nodes=-1,
                              disable_upnp=True,
                              disable_stun_check=True,
                              disable_open_browser=True,
