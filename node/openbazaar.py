@@ -1,24 +1,17 @@
 #!./env/bin/python
 # OpenBazaar's launcher script.
-import argparse
+# Authors: Angel Leon (@gubatron)
+
 import os
+import argparse
+import multiprocessing
+from openbazaar_daemon import node_starter
+from setup_db import setup_db
 from network_util import init_aditional_STUN_servers, check_NAT_status
 
 
 def is_osx():
     return os.uname()[0].startswith('Darwin')
-
-
-def osx_check_dyld_library_path():
-    '''This is a necessary workaround as you cannot set the DYLD_LIBRARY_PATH by the time python has started.'''
-    if 'DYLD_LIBRARY_PATH' not in os.environ or len(os.environ['DYLD_LIBRARY_PATH']) == 0:
-        print 'WARNING: DYLD_LIBRARY_PATH not set, this might cause issues with openssl elliptic curve cryptography and other libraries.'
-        print "It is recommended that you stop OpenBazaar and set your DYLD_LIBRARY_PATH environment variable as follows\n"
-        print 'export DYLD_LIBRARY_PATH=$(brew --prefix openssl)/lib:${DYLD_LIBRARY_PATH}', "\n"
-        print 'then restart OpenBazaar.', "\n"
-
-        import sys
-        sys.exit(1)
 
 
 def getDefaults():
@@ -27,8 +20,9 @@ def getDefaults():
             'LOG_FILE': 'production.log',
             'DB_DIR': 'db',
             'DB_FILE': 'ob.db',
-            'DEV_DB_FILE': 'ob-dev.db',
+            'DEV_DB_FILE': 'ob-dev-{0}.db',
             'DEVELOPMENT': False,
+            'DEV_NODES': 3,
             'SEED_MODE': False,
             'SEED_HOSTNAMES': 'seed.openbazaar.org seed2.openbazaar.org seed.openlabs.co us.seed.bizarre.company eu.seed.bizarre.company'.split(),
             'DISABLE_UPNP': False,
@@ -86,6 +80,7 @@ def initArgumentParser(defaults):
 
     parser.add_argument('-n', '--dev-nodes',
                         type=int,
+                        default=-1,
                         help='Number of Dev nodes to start up')
 
     parser.add_argument('--bitmessage-user', '--bmuser',
@@ -181,14 +176,14 @@ openbazaar [options] <command>
     -d, --development-mode
         Enable development mode
 
+    -n, --dev-nodes
+        Number of dev nodes to start up
+
     --database
         Database filename. (default 'db/od.db')
 
     --disable-sqlite-crypt
         Disable encryption on sqlite database
-
-    -n, --dev-nodes
-        Number of dev nodes to start up
 
     --bitmessage-user, --bmuser
         Bitmessage API username
@@ -223,7 +218,17 @@ openbazaar [options] <command>
 """
 
 
-def create_openbazaar_context(arguments, defaults, nat_status):
+def create_openbazaar_contexts(arguments, defaults, nat_status):
+    """
+    This method will return a list of OpenBazaarContext objects.
+    If we are on production mode, the list will contain a
+    single OpenBazaarContext object based on the arguments passed.
+
+    If a configuration file is passed, settings from the configuration
+    file will be read first, and whatever other parameters have been
+    passed via the command line will override the settings on the
+    configuration file.
+    """
     # TODO: if a --config file has been specified
     # first load config values from it
     # then override the rest that has been passed
@@ -241,13 +246,9 @@ def create_openbazaar_context(arguments, defaults, nat_status):
     if arguments.server_public_port is not None and arguments.server_public_port != my_market_port:
         my_market_port = arguments.server_public_port
     elif nat_status is not None:
-        import stun
-        # let's try the external port if we're behind
-        # a non symmetric nat (e.g. Full Cone, Restricted Cone)
-        # learn more: http://think-like-a-computer.com/2011/09/16/types-of-nat/
-        if nat_status['nat_type'] not in (stun.SymmetricNAT,
-                                          stun.SymmetricUDPFirewall):
-            my_market_port = nat_status['external_port']
+        # override the port for p2p communications with the one
+        # obtained from the STUN server.
+        my_market_port = nat_status['external_port']
 
     # http ip
     http_ip = defaults['HTTP_IP']
@@ -308,6 +309,13 @@ def create_openbazaar_context(arguments, defaults, nat_status):
     if arguments.development_mode != dev_mode:
         dev_mode = arguments.development_mode
 
+    # dev nodes
+    dev_nodes = -1
+    if arguments.development_mode:
+        dev_nodes = defaults['DEV_NODES']
+        if arguments.dev_nodes != dev_nodes:
+            dev_nodes = arguments.dev_nodes
+
     # database
     if not os.path.exists(defaults['DB_DIR']):
         os.makedirs(defaults['DB_DIR'], 0755)
@@ -341,28 +349,62 @@ def create_openbazaar_context(arguments, defaults, nat_status):
         enable_ip_checker = True
 
     from openbazaar_daemon import OpenBazaarContext   # yes, please don't move this import from here.
-    ob_ctx = OpenBazaarContext(nat_status,
-                               my_market_ip,
-                               my_market_port,
-                               http_ip,
-                               http_port,
-                               db_path,
-                               log_path,
-                               log_level,
-                               market_id,
-                               bm_user,
-                               bm_pass,
-                               bm_port,
-                               seed_peers,
-                               seed_mode,
-                               dev_mode,
-                               disable_upnp,
-                               disable_stun_check,
-                               disable_open_browser,
-                               disable_sqlite_crypt,
-                               enable_ip_checker)
+    ob_ctxs = []
 
-    return ob_ctx
+    if not dev_mode:
+        # we return a list of a single element, a production node.
+        ob_ctxs.append(OpenBazaarContext(nat_status,
+                                         my_market_ip,
+                                         my_market_port,
+                                         http_ip,
+                                         http_port,
+                                         db_path,
+                                         log_path,
+                                         log_level,
+                                         market_id,
+                                         bm_user,
+                                         bm_pass,
+                                         bm_port,
+                                         seed_peers,
+                                         seed_mode,
+                                         dev_mode,
+                                         dev_nodes,
+                                         disable_upnp,
+                                         disable_stun_check,
+                                         disable_open_browser,
+                                         disable_sqlite_crypt,
+                                         enable_ip_checker))
+    elif dev_nodes > 0:
+        # we create a different OpenBazaarContext object for each development node.
+        i = 1
+        db_path = defaults['DB_DIR'] + os.sep + defaults['DEV_DB_FILE']
+        db_dirname = os.path.dirname(db_path)
+        while i <= dev_nodes:
+            db_path = db_dirname + os.path.sep + defaults['DEV_DB_FILE'].format(i)
+            ob_ctxs.append(OpenBazaarContext(nat_status,
+                                             my_market_ip,
+                                             my_market_port,
+                                             http_ip,
+                                             http_port,
+                                             db_path,
+                                             log_path,
+                                             log_level,
+                                             market_id,
+                                             bm_user,
+                                             bm_pass,
+                                             bm_port,
+                                             seed_peers,
+                                             seed_mode,
+                                             dev_mode,
+                                             dev_nodes,
+                                             disable_upnp,
+                                             disable_stun_check,
+                                             disable_open_browser,
+                                             disable_sqlite_crypt,
+                                             enable_ip_checker))
+            i = i + 1
+
+    return ob_ctxs
 
 
 def ensure_database_setup(ob_ctx, defaults):
@@ -381,40 +423,40 @@ def ensure_database_setup(ob_ctx, defaults):
 
     if not os.path.exists(db_path):
         # setup the database if file not there.
-        from setup_db import setup_db
         print "[openbazaar] bootstrapping database ", os.path.basename(db_path)
         setup_db(db_path)
         print "[openbazaar] database setup completed\n"
 
 
 def start(arguments, defaults):
-    print "Checking NAT Status..."
     init_aditional_STUN_servers()
 
+    # Turn off checks that don't make sense in development mode
+    if arguments.development_mode:
+        print "DEVELOPMENT MODE! (Disable STUN check and UPnP mappings)"
+        arguments.disable_stun_check = True
+        arguments.disable_upnp = True
+
+    # Try to get NAT escape UDP port
     nat_status = None
-    if not arguments.disable_stun_check:
+    if not arguments.development_mode or not arguments.disable_stun_check:
+        print "Checking NAT Status..."
         nat_status = check_NAT_status()
 
-    ob_ctx = create_openbazaar_context(arguments, defaults, nat_status)
+    ob_ctxs = create_openbazaar_contexts(arguments, defaults, nat_status)
+    for ob_ctx in ob_ctxs:
+        ensure_database_setup(ob_ctx, defaults)
 
-    ensure_database_setup(ob_ctx, defaults)
-
-#     print "Arguments:"
-#     print arguments
-#
-#     print "\nOpenBazaarContextObject:"
-#     print ob_ctx
-    from openbazaar_daemon import start_node
-    start_node(ob_ctx)
+    print "About to start father process"
+    p = multiprocessing.Process(target=node_starter, args=(ob_ctxs,))
+    # p.daemon = True
+    p.start()
 
 
 def main():
     defaults = getDefaults()
     parser = initArgumentParser(defaults)
     arguments = parser.parse_args()
-
-    if is_osx():
-        osx_check_dyld_library_path()
 
     print "Command: '" + arguments.command + "'"
 

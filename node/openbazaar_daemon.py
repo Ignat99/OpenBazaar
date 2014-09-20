@@ -3,6 +3,7 @@ import json
 import os
 import signal
 import time
+import multiprocessing
 from threading import Thread
 
 import tornado.web
@@ -56,6 +57,7 @@ class OpenBazaarContext:
                  seed_peers,
                  seed_mode,
                  dev_mode,
+                 dev_nodes,
                  disable_upnp,
                  disable_stun_check,
                  disable_open_browser,
@@ -76,6 +78,7 @@ class OpenBazaarContext:
         self.seed_peers = seed_peers
         self.seed_mode = seed_mode
         self.dev_mode = dev_mode
+        self.dev_nodes = dev_nodes
         self.disable_upnp = disable_upnp
         self.disable_stun_check = disable_stun_check
         self.disable_open_browser = disable_open_browser
@@ -102,6 +105,7 @@ class OpenBazaarContext:
              "seed_peers": self.seed_peers,
              "seed_mode": self.seed_mode,
              "dev_mode": self.dev_mode,
+             "dev_nodes": self.dev_nodes,
              "log_level": self.log_level,
              "db_path": self.db_path,
              "disable_upnp": self.disable_upnp,
@@ -217,7 +221,20 @@ def start_ioloop():
             raise e
 
 
+def node_starter(ob_ctxs):
+    # This is the target for the the daemon Process which 
+    # will spawn the children threads that spawn
+    # the actual OpenBazaar instances.
+    print "node_starter!"
+    print ob_ctxs
+    for ob_ctx in ob_ctxs:
+        p = multiprocessing.Process(target=start_node, args=(ob_ctx,))
+        p.start()
+        print "Started process pid:", p.pid
+
+
 def start_node(ob_ctx):
+    print "Start Node!"
     try:
         logging.basicConfig(
             level=int(ob_ctx.log_level),
@@ -272,3 +289,4 @@ def start_node(ob_ctx):
         pass
 
     start_ioloop()
+    print "Ended start_node()"
