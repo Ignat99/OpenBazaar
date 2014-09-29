@@ -23,39 +23,39 @@ TEST_DB_PATH = "auction_ob.db"
 def setup_db(db_path, disable_sqlite_crypt=False):
     """ Create table auction
         Additional Information: http://www.sqlite.org/datatype3.html
-        
-            Column     |           Type           |                          Modifiers                          
+
+            Column     |           Type           |                          Modifiers
         ---------------+--------------------------+-------------------------------------------------------------
          listingid     | integer                  | not null default nextval('auction_listingid_seq'::regclass)
          vendorid      | integer                  | default 0
          playerid      | integer                  | default 0
          batchid       | integer                  | default 0
-         uploaditem    | integer                  | 
-         title         | text                     | 
+         uploaditem    | integer                  |
+         title         | text                     |
          ctgid         | integer[]                | default '{0}'::integer[]
          bid           | numeric(32,2)            | default 0.00
-         bidder        | integer                  | 
+         bidder        | integer                  |
          bidcnt        | integer                  | default 0
          nickname      | character varying(80)    | default 'vendor'::character varying
-         reservprice   | numeric(32,2)            | 
+         reservprice   | numeric(32,2)            |
          listingtype   | character(1)             | default 'O'::bpchar
-         start         | timestamp with time zone | 
-         stop          | timestamp with time zone | 
+         start         | timestamp with time zone |
+         stop          | timestamp with time zone |
          registered    | timestamp with time zone | default ('now'::text)::timestamp with time zone
-         start_epoch   | integer                  | 
-         start_180     | integer                  | 
-         stop_epoch    | integer                  | 
-         stop_3600     | integer                  | 
-         featured      | boolean                  | 
+         start_epoch   | integer                  |
+         start_180     | integer                  |
+         stop_epoch    | integer                  |
+         stop_3600     | integer                  |
+         featured      | boolean                  |
          giftcert      | character(1)             | default 'N'::bpchar
-         image         | text                     | 
-         title_idx     | text                     | 
+         image         | text                     |
+         title_idx     | text                     |
          currency      | character(3)             | default 'USD'::bpchar
-         quantity      | numeric(32,2)            | 
+         quantity      | numeric(32,2)            |
          paytype       | character(1)             | default 'N'::bpchar
-         shippaymethod | character(1)             | 
-         ship1         | numeric(32,2)            | 
-         ship2         | numeric(32,2)            | 
+         shippaymethod | character(1)             |
+         ship1         | numeric(32,2)            |
+         ship2         | numeric(32,2)            |
          shipdest      | character(1)             | default 'I'::bpchar
          moneyorder    | character(1)             | default 'N'::bpchar
          cod           | character(1)             | default 'N'::bpchar
@@ -64,7 +64,7 @@ def setup_db(db_path, disable_sqlite_crypt=False):
          paypal        | character(1)             | default 'N'::bpchar
          sku           | character varying(20)    | default 'N'::character varying
          taxable       | character(1)             | default 'N'::bpchar
-         url_thumbnail | text                     | 
+         url_thumbnail | text                     |
     """
 
     if not os.path.isfile(db_path):
