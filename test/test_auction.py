@@ -1,19 +1,8 @@
 #!/usr/bin/env python
-#
-# This library is free software, distributed under the terms of
-# the GNU Lesser General Public License Version 3, or any later version.
-# See the COPYING file included in this archive
-#
-# The docstrings in this module contain epytext markup; API documentation
-# may be created by processing this file with epydoc: http://epydoc.sf.net
 import os
-import sys
+import re
 import unittest
 
-# Add root directory of the project to our path in order to import db_store
-dir_of_executable = os.path.dirname(__file__)
-path_to_project_root = os.path.abspath(os.path.join(dir_of_executable, '..'))
-sys.path.insert(0, path_to_project_root)
 from node.db_store import Obdb
 #from node.setup_db import setup_db
 from pysqlcipher import dbapi2 as sqlite
@@ -24,9 +13,10 @@ def setup_db(db_path, disable_sqlite_crypt=False):
     """ Create table auction
         Additional Information: http://www.sqlite.org/datatype3.html
 
-            Column     |           Type           |                          Modifiers
-        ---------------+--------------------------+-------------------------------------------------------------
-         listingid     | integer                  | not null default nextval('auction_listingid_seq'::regclass)
+            Column     |           Type           |          Modifiers
+        ---------------+--------------------------+---------------------------
+         listingid     | integer                  | not null default nextval( \
+             'auction_listingid_seq'::regclass)
          vendorid      | integer                  | default 0
          playerid      | integer                  | default 0
          batchid       | integer                  | default 0
@@ -36,12 +26,14 @@ def setup_db(db_path, disable_sqlite_crypt=False):
          bid           | numeric(32,2)            | default 0.00
          bidder        | integer                  |
          bidcnt        | integer                  | default 0
-         nickname      | character varying(80)    | default 'vendor'::character varying
+         nickname      | character varying(80)    | default \
+             'vendor'::character varying
          reservprice   | numeric(32,2)            |
          listingtype   | character(1)             | default 'O'::bpchar
          start         | timestamp with time zone |
          stop          | timestamp with time zone |
-         registered    | timestamp with time zone | default ('now'::text)::timestamp with time zone
+         registered    | timestamp with time zone | default ( \
+             'now'::text)::timestamp with time zone
          start_epoch   | integer                  |
          start_180     | integer                  |
          stop_epoch    | integer                  |
@@ -62,7 +54,8 @@ def setup_db(db_path, disable_sqlite_crypt=False):
          perchck       | character(1)             | default 'N'::bpchar
          visa_mc       | character(1)             | default 'N'::bpchar
          paypal        | character(1)             | default 'N'::bpchar
-         sku           | character varying(20)    | default 'N'::character varying
+         sku           | character varying(20)    | default \
+             'N'::character varying
          taxable       | character(1)             | default 'N'::bpchar
          url_thumbnail | text                     |
     """
@@ -121,6 +114,30 @@ def setup_db(db_path, disable_sqlite_crypt=False):
                         "url_thumbnail TEXT, "
                         "FOREIGN KEY(market_id) REFERENCES markets(id))")
 
+def check_dt(dvar, data_type, maxval=999999999):
+    error = "FATAL ERROR: Illegal Data Type Defined"
+    if data_type == "int":
+        if (type(dvar) is not int) or dvar > maxval:
+            raise TypeError(error)
+    elif data_type == "long":
+        if (type(dvar) is not long) or dvar > maxval:
+            raise TypeError(error)
+    elif data_type == "float":
+        if (type(dvar) is not float) or dvar > maxval:
+            raise TypeError(error)
+    elif data_type == "str":
+        if type(dvar) is not str:
+            raise TypeError(error)
+    elif data_type == "word":
+        if not re.match("/^([a-z]|[0-9])+$/i", dvar):
+            raise TypeError(error)
+    elif data_type == "text":
+        dvar = re.sub(r'\'', r'&#39;', dvar)
+        dvar = re.sub(r'\\\"', r'&#34;', dvar)
+        dvar = re.sub(r'<', r'&#60;', dvar)
+        dvar = re.sub(r'>', r'&#62;', dvar)
+        return dvar
+
 def setUpModule():
     # Create a test db.
     if not os.path.isfile(TEST_DB_PATH):
@@ -140,13 +157,14 @@ class TestDbOperations(unittest.TestCase):
         db = Obdb(TEST_DB_PATH)
 
         # Create a dictionary of a random auction
-        auction_to_store = {"listingid": 1,
-                           "vendorid": 2,
-                           "playerid": 3,
-                           "title": "A book",
-                           "giftcert": "Y",
-                           "title_idx": "Very happy book",
-                           "bid": 10.4}
+        auction_to_store = {
+            "listingid": 1,
+            "vendorid": 2,
+            "playerid": 3,
+            "title": "A book",
+            "giftcert": "Y",
+            "title_idx": "Very happy book",
+            "bid": 10.4}
 
         # Use the insert operation to add it to the db
         db.insertEntry("auction", auction_to_store)
@@ -182,13 +200,14 @@ class TestDbOperations(unittest.TestCase):
         )
 
         # Let's do it again with a malicious auction.
-        auction_to_store = {"listingid": 4,
-                           "vendorid": 5,
-                           "playerid": 6,
-                           "title": "Devil''''s auction",
-                           "giftcert": "N",
-                           "title_idx": 'Very """"happy"""""" book',
-                           "bid": 20.04}
+        auction_to_store = {
+            "listingid": 4,
+            "vendorid": 5,
+            "playerid": 6,
+            "title": "Devil''''s auction",
+            "giftcert": "N",
+            "title_idx": 'Very """"happy"""""" book',
+            "bid": 20.04}
 
 
         # Use the insert operation to add it to the db
