@@ -6,7 +6,7 @@
 
     <ul class="nav nav-pills">
       <li class="active"><a href="#" onclick="$(this).parent().addClass('active');$(this).parent().siblings().removeClass('active');$('#add-product-fixed').show();$('#add-product-fixed').siblings().hide();return false;">Fixed Price</a></li>
-      <!--<li><a href="#" onclick="$(this).parent().addClass('active');$(this).parent().siblings().removeClass('active');$('#add-product-auction').show();$('#add-product-auction').siblings().hide();return false;">Auction</a></li>-->
+      <li><a href="#" onclick="$(this).parent().addClass('active');$(this).parent().siblings().removeClass('active');$('#add-product-auction').show();$('#add-product-auction').siblings().hide();return false;">Auction</a></li>
       <li><a href="#" onclick="$(this).parent().addClass('active');$(this).parent().siblings().removeClass('active');$('#add-product-import').show();$('#add-product-import').siblings().hide();return false;">Import Contract</a></li>
     </ul>
 
@@ -14,11 +14,39 @@
 
         <form novalidate role="form" id="newContractForm" name="newContractForm">
 
-            <div id="add-product-import" class="col-sm-12" style="display:none;">
-                <h3>Import contract</h3>
-                <div class="alert alert-info" >Copy-paste your contract into this text box. You can generate custom contracts using the html contract generator.</div>
+            <div id="add-product-auction" class="col-sm-12" style="display:none;">
+                <h3>SELL: Certified Merchant Program</h3>
+                <div class="alert alert-info" >
+                           <h3><b><font size="4">To join the Certified Merchant program:</font></b><h3>
+               <ul>
+               <li><b>You must be a licensed and established business.</b><br>
+                           <span id="notice"><u>Please note:</u> currently Bidz.com does not support private sellers</span><br><br></li>
+                           <li><b>You must agree to the following <u>Terms & Conditions</u>:</b><br>
+                            <span id="small">&nbsp;&nbsp; - You must sell your merchandise starting at $1.00 No Minimum Reserve Price.<br>
+                                &nbsp;&nbsp; - You must provide prompt & professional customer service.<br>
+                                &nbsp;&nbsp; - You must agree to a 15 day money-back guarantee!<br>
+                                &nbsp;&nbsp; - You must ship out item(s) 3-5 days after payment(s) is received.<br>
+                                &nbsp;&nbsp; - You must have product description and images available.</span><br><br></li>
+                                <li><b>You must accept OpenBazaar <u>selling fees</u>.</b></l$
+                                <li><b>To qualify, you must <u>fill out</u> and <u>submit</u> the form below.</b></li>
+                           </ul>
+                           <b><u>NOTICE:</u></b><br><br>
+                           <b>1.</b> You must have your product in stock and ready to be shipped.<br><br>
+                           <b>2.</b> We do not accept applications for the following categories:<br><br>
+                           <b>&nbsp;&nbsp;&nbsp;- Jewelry &nbsp; &nbsp; &nbsp; - 3 Minute Auctions &nbsp; &nbsp; &nbsp; - Vacations/Travel</b>
+                           <br><br>
+                           <b>3.</b> We will no longer accept applications for merchants selling items through "dropship companies" or "distributing companies"
+                           (Companies that sell items from catalogs, and/or other companies dropship the products)
+</div>
                 <textarea rows="10" class="form-control" ng-model="contract.rawText"></textarea>
             </div>
+
+            <div id="add-product-import" class="col-sm-12" style="display:none;">
+                <h3>Import contract</h3>
+                <div class="alert alert-info" >Copy-paste your contract into this text box. You can generate custom contracts using the html contract generat$
+                <textarea rows="10" class="form-control" ng-model="contract.rawText"></textarea>
+            </div>
+
 
             <div id="add-product-fixed" class="col-sm-12" style="margin-top:20px">
 
