@@ -6,22 +6,29 @@
 
 We have to change in that files and functions in OB:
 
-https://github.com/OpenBazaar/OpenBazaar/blob/develop/node/multisig.py
+[node/multisig.py](https://github.com/OpenBazaar/OpenBazaar/blob/develop/node/multisig.py)
+
+```
 1. class Multisig(object): def __init__(self, client, number_required, pubkeys):
 2. def build_output_info_list(unspent_rows):
 3. .... any
 ...
 21. def finished_msig(tx):
+```
 
-https://github.com/OpenBazaar/OpenBazaar/blob/develop/node/connection.py
+[node/connection.py](https://github.com/OpenBazaar/OpenBazaar/blob/develop/node/connection.py)
+
+```
 1. def create_zmq_socket(self):
 2. def send_raw(self, serialized, callback=lambda msg: None):
 3. def generate_sin(guid):
 4. def send(self, data, callback=lambda msg: None): (Just check, may
 be not need change)
+```
 
+[node/transport.py](https://github.com/OpenBazaar/OpenBazaar/blob/develop/node/transport.py)
 
-https://github.com/OpenBazaar/OpenBazaar/blob/develop/node/transport.py
+```
 1. def build_output_info_list(unspent_rows):
 2. def _generate_new_keypair(self):
 3. def respond_pubkey_if_mine(self, nickname, ident_pubkey):
@@ -38,9 +45,11 @@ https://github.com/OpenBazaar/OpenBazaar/blob/develop/node/transport.py
 14. def _setup_settings(self):
 15. def pubkey_exists(self, pub):
 16. def send(self, data, send_to=None, callback=lambda msg: None):
+```
 
+[node/ws.py](https://github.com/OpenBazaar/OpenBazaar/blob/develop/node/ws.py)
 
-https://github.com/OpenBazaar/OpenBazaar/blob/develop/node/ws.py
+```
 1. def reputation_pledge_retrieved(amount, page):
 2. def found_unspent(amount):
 3. def on_listing_results(self, msg):
@@ -89,6 +98,7 @@ market.py interface)
 41. def on_node_message(self, *args):
 42. def send_to_client(self, error, result):
 43. def get_peers(self): (need check)
+```
 
 ## Terms & Conventions
 
